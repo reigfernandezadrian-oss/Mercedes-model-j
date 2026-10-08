@@ -1,0 +1,633 @@
+{
+  "version_configuracion": "1.0",
+  "estado": "PROPUESTA del Hito 1; se congela al validar el Hito 2",
+  "version_generador": "a registrar al ejecutar (git commit)",
+  "reglas": {
+    "version": "postventa_v1",
+    "mapa_nivel_etiqueta": {
+      "1": "preferente",
+      "2": "alta",
+      "3": "media",
+      "4": "ordinaria",
+      "5": "baja"
+    },
+    "umbrales": {
+      "1": {
+        "d": 730,
+        "r": 180,
+        "m": 10000
+      },
+      "2": {
+        "d": 540,
+        "r": 90,
+        "m": 5000,
+        "v_igual": 0
+      },
+      "3": {
+        "d": 365,
+        "r": 30,
+        "m": 2000
+      },
+      "4": {
+        "d": 180,
+        "r": 1,
+        "m": 1,
+        "v_igual": 1
+      },
+      "5": "sin condicion"
+    },
+    "orden_predicados_en_nivel": [
+      "inactividad",
+      "retraso",
+      "exceso_km",
+      "frecuencia"
+    ],
+    "codigos_motivo": [
+      "n1_inactividad",
+      "n1_retraso",
+      "n1_exceso_km",
+      "n2_inactividad",
+      "n2_retraso",
+      "n2_exceso_km",
+      "n2_sin_visitas",
+      "n3_inactividad",
+      "n3_retraso",
+      "n3_exceso_km",
+      "n4_inactividad",
+      "n4_retraso",
+      "n4_exceso_km",
+      "n4_una_visita",
+      "sin_condicion"
+    ],
+    "codigos_inalcanzables_en_datos_coherentes": [
+      "n3_inactividad"
+    ]
+  },
+  "fecha_corte": "2026-06-30",
+  "ventanas_dias": {
+    "anual": 365,
+    "bianual": 730,
+    "regla": "0 <= antigüedad < ventana"
+  },
+  "aleatoriedad": {
+    "algoritmo": "numpy.random.Generator(PCG64)",
+    "semilla_raiz": 20261008,
+    "flujos": "np.random.SeedSequence(semilla_raiz).spawn(n); un flujo por propósito y escenario",
+    "flujos_definidos": [
+      "catalogos",
+      "perfiles",
+      "eventos",
+      "importes",
+      "contactos",
+      "identificadores",
+      "mezcla_y_orden"
+    ],
+    "escenarios_hijo": {
+      "desarrollo": 0,
+      "balanceado": 1,
+      "desbalanceado": 2,
+      "pruebas": 3
+    },
+    "nota": "Una semilla sola no describe el procedimiento: ver también cuotas, catálogos y política de rechazo."
+  },
+  "escenarios": {
+    "desarrollo": {
+      "N": 1000,
+      "distribucion": "balanceada",
+      "cuotas": {
+        "1": 200,
+        "2": 200,
+        "3": 200,
+        "4": 200,
+        "5": 200
+      },
+      "archivo": "postventa_desarrollo.csv"
+    },
+    "balanceado": {
+      "N": 100000,
+      "pesos": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "cuotas": {
+        "1": 20000,
+        "2": 20000,
+        "3": 20000,
+        "4": 20000,
+        "5": 20000
+      },
+      "archivo": "postventa_balanceado.csv"
+    },
+    "desbalanceado": {
+      "N": 100000,
+      "pesos": [
+        1,
+        2,
+        3,
+        6,
+        8
+      ],
+      "cuotas": {
+        "1": 5000,
+        "2": 10000,
+        "3": 15000,
+        "4": 30000,
+        "5": 40000
+      },
+      "archivo": "postventa_desbalanceado.csv",
+      "nota": "Pesos docentes (1,2,3,6,8) normalizados; restos por mayor resto fraccionario."
+    },
+    "desarrollo_desbalanceado_ref": {
+      "1": 50,
+      "2": 100,
+      "3": 150,
+      "4": 300,
+      "5": 400
+    },
+    "escalabilidad_opcional": {
+      "N": 1000000,
+      "obligatorio": false
+    }
+  },
+  "politica_redondeo": {
+    "cuotas": "método del mayor resto; desempate por nivel menor",
+    "enteros_generados": "mitad hacia arriba: floor(x + 0.5)",
+    "importes": "céntimos enteros tras truncar al dominio"
+  },
+  "politica_rechazo": {
+    "procedimiento": "elegir nivel objetivo con cuota pendiente -> generar fila completa condicionada -> calcular nivel -> aceptar solo si coincide y es válida",
+    "max_intentos_por_fila_aceptada": 200,
+    "abortar_si_ratio_rechazo_global_mayor_que": 0.9,
+    "registrar": [
+      "aceptadas por nivel",
+      "rechazadas por motivo (nivel distinto, km fuera de dominio, incoherencia temporal, cuota llena)"
+    ],
+    "prohibido": [
+      "cambiar la etiqueta para completar cuota",
+      "modificar solo una derivada",
+      "duplicar filas"
+    ]
+  },
+  "historial": {
+    "enfoque": "generar eventos auxiliares y agregarlos (los eventos no se exportan en el dataset grande)",
+    "un_evento_por_dia": true,
+    "primera_visita_tipo": "mantenimiento",
+    "intervenciones_min_por_visita": 1,
+    "extras_antes_de_ventana": "visitas en [365,730) ~ Poisson(1.2) acotado por el hueco temporal; antes de 730 ~ Poisson(2.0)",
+    "km": "por segmentos entre eventos: días * km_diarios * U(0.8,1.2), acumulados (monótono por construcción); límite km_actual <= 350000"
+  },
+  "intervalos_servicio_catalogo": [
+    {
+      "id": "S1",
+      "dias": 180,
+      "km": 10000
+    },
+    {
+      "id": "S2",
+      "dias": 365,
+      "km": 15000
+    },
+    {
+      "id": "S3",
+      "dias": 365,
+      "km": 20000
+    },
+    {
+      "id": "S4",
+      "dias": 730,
+      "km": 30000
+    }
+  ],
+  "intervalos_por_combustible": {
+    "gasolina": {
+      "S1": 0.2,
+      "S2": 0.5,
+      "S3": 0.3
+    },
+    "diesel": {
+      "S1": 0.2,
+      "S2": 0.3,
+      "S3": 0.5
+    },
+    "hibrido": {
+      "S2": 0.5,
+      "S3": 0.3,
+      "S4": 0.2
+    },
+    "electrico": {
+      "S3": 0.4,
+      "S4": 0.6
+    }
+  },
+  "catalogos": {
+    "modelos": [
+      {
+        "modelo": "nova_c",
+        "carroceria": "compacto",
+        "combustibles": [
+          "gasolina",
+          "diesel"
+        ],
+        "transmisiones": [
+          "manual",
+          "automatica"
+        ],
+        "peso": 0.14
+      },
+      {
+        "modelo": "nova_ch",
+        "carroceria": "compacto",
+        "combustibles": [
+          "hibrido"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.05
+      },
+      {
+        "modelo": "nova_ce",
+        "carroceria": "compacto",
+        "combustibles": [
+          "electrico"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.06
+      },
+      {
+        "modelo": "aria_b",
+        "carroceria": "berlina",
+        "combustibles": [
+          "gasolina",
+          "diesel",
+          "hibrido"
+        ],
+        "transmisiones": [
+          "manual",
+          "automatica"
+        ],
+        "peso": 0.14
+      },
+      {
+        "modelo": "aria_be",
+        "carroceria": "berlina",
+        "combustibles": [
+          "electrico"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.06
+      },
+      {
+        "modelo": "terra_s",
+        "carroceria": "suv",
+        "combustibles": [
+          "gasolina",
+          "diesel",
+          "hibrido"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.16
+      },
+      {
+        "modelo": "terra_m",
+        "carroceria": "suv",
+        "combustibles": [
+          "gasolina",
+          "diesel"
+        ],
+        "transmisiones": [
+          "manual",
+          "automatica"
+        ],
+        "peso": 0.14
+      },
+      {
+        "modelo": "terra_se",
+        "carroceria": "suv",
+        "combustibles": [
+          "electrico"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.07
+      },
+      {
+        "modelo": "vento_v",
+        "carroceria": "furgoneta",
+        "combustibles": [
+          "diesel"
+        ],
+        "transmisiones": [
+          "manual",
+          "automatica"
+        ],
+        "peso": 0.12
+      },
+      {
+        "modelo": "vento_ve",
+        "carroceria": "furgoneta",
+        "combustibles": [
+          "electrico"
+        ],
+        "transmisiones": [
+          "automatica"
+        ],
+        "peso": 0.06
+      }
+    ],
+    "talleres": [
+      {
+        "id": "T01",
+        "zona": "norte",
+        "peso": 0.12
+      },
+      {
+        "id": "T02",
+        "zona": "norte",
+        "peso": 0.06
+      },
+      {
+        "id": "T03",
+        "zona": "noreste",
+        "peso": 0.1
+      },
+      {
+        "id": "T04",
+        "zona": "noreste",
+        "peso": 0.07
+      },
+      {
+        "id": "T05",
+        "zona": "centro",
+        "peso": 0.11
+      },
+      {
+        "id": "T06",
+        "zona": "centro",
+        "peso": 0.08
+      },
+      {
+        "id": "T07",
+        "zona": "este",
+        "peso": 0.09
+      },
+      {
+        "id": "T08",
+        "zona": "este",
+        "peso": 0.07
+      },
+      {
+        "id": "T09",
+        "zona": "sur",
+        "peso": 0.08
+      },
+      {
+        "id": "T10",
+        "zona": "sur",
+        "peso": 0.07
+      },
+      {
+        "id": "T11",
+        "zona": "islas",
+        "peso": 0.09
+      },
+      {
+        "id": "T12",
+        "zona": "islas",
+        "peso": 0.06
+      }
+    ],
+    "tipo_cliente": [
+      "particular",
+      "empresa",
+      "flota"
+    ],
+    "canal_preferido": [
+      "telefono",
+      "correo",
+      "app"
+    ],
+    "respuesta_ultimo_contacto": [
+      "acepta",
+      "rechaza",
+      "sin_respuesta",
+      "sin_contacto"
+    ],
+    "carroceria": [
+      "compacto",
+      "berlina",
+      "suv",
+      "furgoneta"
+    ],
+    "combustible": [
+      "gasolina",
+      "diesel",
+      "hibrido",
+      "electrico"
+    ],
+    "transmision": [
+      "manual",
+      "automatica"
+    ],
+    "uso_vehiculo": [
+      "urbano",
+      "mixto",
+      "carretera",
+      "profesional"
+    ],
+    "tipo_ultima_visita": [
+      "mantenimiento",
+      "reparacion",
+      "revision"
+    ],
+    "estado_caso": [
+      "pendiente",
+      "asignado"
+    ]
+  },
+  "distribuciones": {
+    "tipo_cliente": {
+      "particular": 0.7,
+      "empresa": 0.15,
+      "flota": 0.15
+    },
+    "uso_por_tipo": {
+      "particular": {
+        "urbano": 0.4,
+        "mixto": 0.4,
+        "carretera": 0.2,
+        "profesional": 0.0
+      },
+      "empresa": {
+        "urbano": 0.15,
+        "mixto": 0.35,
+        "carretera": 0.25,
+        "profesional": 0.25
+      },
+      "flota": {
+        "urbano": 0.0,
+        "mixto": 0.15,
+        "carretera": 0.25,
+        "profesional": 0.6
+      }
+    },
+    "canal_preferido": {
+      "telefono": 0.4,
+      "correo": 0.3,
+      "app": 0.3
+    },
+    "km_diarios_lognormal_truncada": {
+      "urbano": {
+        "mediana": 28,
+        "sigma": 0.35,
+        "min": 8,
+        "max": 80
+      },
+      "mixto": {
+        "mediana": 45,
+        "sigma": 0.35,
+        "min": 12,
+        "max": 120
+      },
+      "carretera": {
+        "mediana": 70,
+        "sigma": 0.3,
+        "min": 25,
+        "max": 180
+      },
+      "profesional": {
+        "mediana": 95,
+        "sigma": 0.3,
+        "min": 30,
+        "max": 250
+      }
+    },
+    "coste_visita_cent_lognormal_truncada": {
+      "mantenimiento": {
+        "mediana": 28000,
+        "sigma": 0.45,
+        "min": 9000,
+        "max": 120000
+      },
+      "reparacion": {
+        "mediana": 65000,
+        "sigma": 0.8,
+        "min": 5000,
+        "max": 900000
+      },
+      "revision": {
+        "mediana": 14000,
+        "sigma": 0.35,
+        "min": 6000,
+        "max": 45000
+      }
+    },
+    "tipo_ultima_visita_multivisita": {
+      "mantenimiento": 0.5,
+      "reparacion": 0.3,
+      "revision": 0.2
+    },
+    "contacto": {
+      "p_sin_contacto": 0.2,
+      "dias_desde_contacto": "exponencial truncada media 120 d",
+      "contactos_12m": "1 + Poisson(1.5), máx. 12",
+      "respuesta_si_contacto": {
+        "acepta": 0.3,
+        "rechaza": 0.2,
+        "sin_respuesta": 0.5
+      }
+    },
+    "nota": "Se sortea siempre dentro del dominio (inversa de la CDF truncada); no se recorta a cero."
+  },
+  "predicados_objetivo_por_nivel": {
+    "1": {
+      "n1_inactividad": "d in [730,1500]",
+      "n1_retraso": "r in [180,900]",
+      "n1_exceso_km": "m in [10000,60000]"
+    },
+    "2": {
+      "n2_inactividad": "d in [540,730)",
+      "n2_sin_visitas": "d in [365,540)",
+      "n2_retraso": "r in [90,180) y d<730",
+      "n2_exceso_km": "m in [5000,10000) y d<730"
+    },
+    "3": {
+      "n3_retraso": "d<365, r in [30,90), m<5000",
+      "n3_exceso_km": "d<365, m in [2000,5000), r<90"
+    },
+    "4": {
+      "n4_inactividad": "d in [180,365), r<30, m<2000",
+      "n4_retraso": "d<365, r in [1,30), m<2000",
+      "n4_exceso_km": "d<365, m in [1,2000), r<30",
+      "n4_una_visita": "v12=1, d<365, r<30, m<2000"
+    },
+    "5": {
+      "sin_condicion": "d<180, r=0, m=0, v12>=2"
+    }
+  },
+  "pruebas": {
+    "archivos": [
+      "postventa_pruebas_validas.csv",
+      "postventa_pruebas_errores.csv"
+    ],
+    "columnas_extra_solo_en_errores": [
+      "error_intencionado",
+      "resultado_esperado"
+    ],
+    "umbrales_a_cubrir": "justo debajo, en el límite y justo encima de cada umbral de d, r, m y v; empates y coincidencia de reglas"
+  },
+  "integridad": {
+    "hash": "SHA-256",
+    "serializacion_canonica": "JSON, claves ordenadas, UTF-8, sin espacios, enteros sin formato; por id_caso",
+    "campos": [
+      "id_caso",
+      "id_cliente",
+      "id_vehiculo",
+      "dias_sin_visita",
+      "retraso_servicio_dias",
+      "exceso_km_servicio",
+      "visitas_12m",
+      "fecha_ultima_visita",
+      "fecha_ultimo_mantenimiento",
+      "km_actual",
+      "km_ultimo_mantenimiento",
+      "intervalo_servicio_dias",
+      "intervalo_servicio_km",
+      "version_reglas",
+      "orden_entrada"
+    ],
+    "archivo_referencia": "hashes_referencia.json (se guarda ANTES de la prueba de alteración)"
+  },
+  "salida": {
+    "formato": "CSV UTF-8, separador ',', nulos = celda vacía (solo fecha_ultimo_contacto), o Parquet si se documenta pyarrow",
+    "relectura": "con dtypes explícitos y repetición de todas las validaciones"
+  },
+  "dependencias_software": {
+    "python": ">=3.11",
+    "paquetes": [
+      "numpy",
+      "pandas",
+      "matplotlib",
+      "pytest",
+      "jupyter",
+      "pyarrow (opcional)"
+    ],
+    "stdlib": [
+      "hashlib",
+      "json",
+      "time",
+      "datetime"
+    ],
+    "versiones": "se vuelcan automáticamente a informe_calidad.json al ejecutar"
+  }
+}

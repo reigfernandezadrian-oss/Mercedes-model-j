@@ -1,0 +1,787 @@
+{
+  "version_diccionario": "1.0",
+  "version_reglas": "postventa_v1",
+  "descripcion": "Diccionario de atributos del dataset sintético de postventa (Laboratorio 1). Todos los datos son sintéticos.",
+  "convenios": {
+    "nombres": "minúsculas con guiones bajos",
+    "fechas": "ISO AAAA-MM-DD",
+    "importes": "céntimos enteros",
+    "distancias": "km enteros",
+    "nulos": "solo fecha_ultimo_contacto; celda vacía en CSV; se declara al cargar",
+    "booleanos": "no se usan banderas booleanas en el esquema obligatorio",
+    "ventana_anual": "antigüedad en [0,365) días",
+    "ventana_bianual": "antigüedad en [0,730) días"
+  },
+  "metodos_generacion": {
+    "constante": "valor fijo del escenario",
+    "muestreado": "se sortea de una distribución",
+    "muestreado_condicionado": "se sortea dentro de un dominio fijado por otras columnas u objetivo",
+    "catalogo": "búsqueda en catálogo, sin sorteo",
+    "calculado": "se deriva con fórmula; nunca se vuelve a muestrear"
+  },
+  "campos_internos_generacion": [
+    "nivel_objetivo",
+    "predicado_objetivo",
+    "perfil_actividad",
+    "historial_eventos"
+  ],
+  "n_columnas": 50,
+  "columnas": [
+    {
+      "nombre": "id_caso",
+      "tipo": "cadena",
+      "rol": "identificador",
+      "metodo_generacion": "muestreado",
+      "depende_de": [],
+      "dominio": "C + 8 dígitos",
+      "regla": "Único. Permutación de enteros únicos, sin relación con nivel, modelo ni orden.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "id_cliente",
+      "tipo": "cadena",
+      "rol": "identificador",
+      "metodo_generacion": "muestreado",
+      "depende_de": [],
+      "dominio": "K + 8 dígitos",
+      "regla": "Único en el núcleo (un cliente por vehículo). Repetible solo en la ampliación multivehículo.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "id_vehiculo",
+      "tipo": "cadena",
+      "rol": "identificador",
+      "metodo_generacion": "muestreado",
+      "depende_de": [],
+      "dominio": "V + 8 dígitos",
+      "regla": "Único en la fotografía. No es matrícula ni VIN.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "id_taller",
+      "tipo": "cadena",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado",
+      "depende_de": [
+        "catalogo_talleres"
+      ],
+      "dominio": "T01..T12",
+      "regla": "Muestreo categórico con pesos no uniformes; todos los talleres deben aparecer.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_corte",
+      "tipo": "fecha",
+      "rol": "trazabilidad",
+      "metodo_generacion": "constante",
+      "depende_de": [],
+      "dominio": "2026-06-30",
+      "regla": "Misma fecha para todo el escenario; nunca el reloj del equipo.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "escenario",
+      "tipo": "categoria",
+      "rol": "trazabilidad",
+      "metodo_generacion": "constante",
+      "depende_de": [],
+      "dominio": [
+        "balanceado",
+        "desbalanceado",
+        "pruebas"
+      ],
+      "regla": "No interviene en la prioridad.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "origen_dato",
+      "tipo": "categoria",
+      "rol": "trazabilidad",
+      "metodo_generacion": "constante",
+      "depende_de": [],
+      "dominio": [
+        "sintetico"
+      ],
+      "regla": "Constante por trazabilidad.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_alta_cliente",
+      "tipo": "fecha",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_primera_visita"
+      ],
+      "dominio": "<= fecha_primera_visita",
+      "regla": "alta = primera visita - Δ, Δ ~ exponencial truncada [0, 2000] días.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "zona_geografica",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "catalogo",
+      "depende_de": [
+        "id_taller"
+      ],
+      "dominio": [
+        "norte",
+        "noreste",
+        "centro",
+        "este",
+        "sur",
+        "islas"
+      ],
+      "regla": "Zona del taller asignado (búsqueda en catálogo, no se sortea).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "tipo_cliente",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado",
+      "depende_de": [],
+      "dominio": [
+        "particular",
+        "empresa",
+        "flota"
+      ],
+      "regla": "Categórico: 0.70 / 0.15 / 0.15.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "canal_preferido",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado",
+      "depende_de": [],
+      "dominio": [
+        "telefono",
+        "correo",
+        "app"
+      ],
+      "regla": "Categórico: 0.40 / 0.30 / 0.30. No se generan datos de contacto.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "contactos_12m",
+      "tipo": "entero",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_ultimo_contacto"
+      ],
+      "dominio": ">= 0",
+      "regla": "0 si no hay contacto o el último está fuera de [0,365); si está dentro, >= 1.",
+      "unidad": "contactos",
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_ultimo_contacto",
+      "tipo": "fecha",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_corte",
+        "fecha_alta_cliente"
+      ],
+      "dominio": "[fecha_alta_cliente, fecha_corte] o ausente",
+      "regla": "Ausente (celda vacía) solo si respuesta = sin_contacto (P = 0.20).",
+      "unidad": null,
+      "nulable": true
+    },
+    {
+      "nombre": "respuesta_ultimo_contacto",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_ultimo_contacto"
+      ],
+      "dominio": [
+        "acepta",
+        "rechaza",
+        "sin_respuesta",
+        "sin_contacto"
+      ],
+      "regla": "sin_contacto <=> fecha ausente. Si hay contacto: acepta 0.30 / rechaza 0.20 / sin_respuesta 0.50. No es evidencia de retención.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "modelo",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado",
+      "depende_de": [
+        "catalogo_modelos"
+      ],
+      "dominio": "10 modelos ficticios",
+      "regla": "Categórico con pesos; sin atribuir prestaciones reales.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "carroceria",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "catalogo",
+      "depende_de": [
+        "modelo"
+      ],
+      "dominio": [
+        "compacto",
+        "berlina",
+        "suv",
+        "furgoneta"
+      ],
+      "regla": "Determinada por el modelo.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "combustible",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "modelo"
+      ],
+      "dominio": [
+        "gasolina",
+        "diesel",
+        "hibrido",
+        "electrico"
+      ],
+      "regla": "Elegido entre los combustibles permitidos del modelo.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "transmision",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "modelo",
+        "combustible"
+      ],
+      "dominio": [
+        "manual",
+        "automatica"
+      ],
+      "regla": "Entre las combinaciones permitidas del catálogo (eléctricos solo automática).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_matriculacion",
+      "tipo": "fecha",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_primera_visita"
+      ],
+      "dominio": "<= fecha_primera_visita",
+      "regla": "matriculación = primera visita - gap, gap ~ exponencial truncada [0, 365] días.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "km_actual",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_matriculacion",
+        "km_diarios_estimados"
+      ],
+      "dominio": "[0, 350000]",
+      "regla": "Final de la acumulación de km por segmentos (ver DISENO.md §4). Se rechaza si excede el límite.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "uso_vehiculo",
+      "tipo": "categoria",
+      "rol": "contexto",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "tipo_cliente"
+      ],
+      "dominio": [
+        "urbano",
+        "mixto",
+        "carretera",
+        "profesional"
+      ],
+      "regla": "Categórico condicionado por tipo de cliente (tabla en configuración).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "km_diarios_estimados",
+      "tipo": "real",
+      "rol": "generacion",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "uso_vehiculo"
+      ],
+      "dominio": "[8, 250]",
+      "regla": "Lognormal truncada por uso, muestreada dentro del dominio (sin clip). No se usa para priorizar.",
+      "unidad": "km/dia",
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_primera_visita",
+      "tipo": "fecha",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_ultimo_mantenimiento",
+        "nivel_objetivo"
+      ],
+      "dominio": "<= fecha_ultimo_mantenimiento",
+      "regla": "Primera visita; siempre de tipo mantenimiento (decisión de diseño).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_ultima_visita",
+      "tipo": "fecha",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_corte",
+        "nivel_objetivo",
+        "predicado_objetivo"
+      ],
+      "dominio": "[primera, fecha_corte]",
+      "regla": "Se obtiene fijando dias_sin_visita dentro del intervalo del nivel/predicado objetivo.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_ultimo_mantenimiento",
+      "tipo": "fecha",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "fecha_ultima_visita",
+        "tipo_ultima_visita",
+        "intervalo_servicio_dias",
+        "nivel_objetivo"
+      ],
+      "dominio": "[primera, ultima visita]",
+      "regla": "= ultima visita si tipo = mantenimiento; estrictamente anterior en otro caso.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "km_ultima_visita",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_ultima_visita",
+        "fecha_matriculacion",
+        "km_diarios_estimados"
+      ],
+      "dominio": "<= km_actual",
+      "regla": "km del evento en la curva de acumulación.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "km_ultimo_mantenimiento",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_ultimo_mantenimiento",
+        "fecha_matriculacion",
+        "km_diarios_estimados"
+      ],
+      "dominio": "<= km_ultima_visita",
+      "regla": "km del evento en la curva de acumulación.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "visitas_total",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos"
+      ],
+      "dominio": ">= 1",
+      "regla": "Número de eventos generados. Máximo un evento por día.",
+      "unidad": "visitas",
+      "nulable": false
+    },
+    {
+      "nombre": "visitas_12m",
+      "tipo": "entero",
+      "rol": "señal",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos",
+        "fecha_corte"
+      ],
+      "dominio": ">= 0",
+      "regla": "Eventos con antigüedad en [0,365). SEÑAL DE PRIORIDAD.",
+      "unidad": "visitas",
+      "nulable": false
+    },
+    {
+      "nombre": "visitas_24m",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos",
+        "fecha_corte"
+      ],
+      "dominio": ">= visitas_12m",
+      "regla": "Eventos con antigüedad en [0,730).",
+      "unidad": "visitas",
+      "nulable": false
+    },
+    {
+      "nombre": "tipo_ultima_visita",
+      "tipo": "categoria",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "nivel_objetivo",
+        "predicado_objetivo"
+      ],
+      "dominio": [
+        "mantenimiento",
+        "reparacion",
+        "revision"
+      ],
+      "regla": "1 visita => mantenimiento. Con retraso objetivo se fuerza reparacion/revision (un mantenimiento reciente anula el retraso).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "intervenciones_12m",
+      "tipo": "entero",
+      "rol": "contexto",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos"
+      ],
+      "dominio": ">= visitas_12m",
+      "regla": "Cada visita tiene 1 + Poisson(0.6) intervenciones (máx. 6). 0 si visitas_12m = 0.",
+      "unidad": "intervenciones",
+      "nulable": false
+    },
+    {
+      "nombre": "coste_ultima_visita_cent",
+      "tipo": "entero",
+      "rol": "contexto",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos"
+      ],
+      "dominio": ">= 0",
+      "regla": "Lognormal truncada según tipo de visita. No es tarifa real.",
+      "unidad": "céntimos",
+      "nulable": false
+    },
+    {
+      "nombre": "coste_12m_cent",
+      "tipo": "entero",
+      "rol": "contexto",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "historial_eventos"
+      ],
+      "dominio": ">= 0",
+      "regla": "Suma de costes de visitas en [0,365). 0 si visitas_12m = 0; >= coste de la última si esta cae en la ventana.",
+      "unidad": "céntimos",
+      "nulable": false
+    },
+    {
+      "nombre": "intervalo_servicio_dias",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "combustible"
+      ],
+      "dominio": [
+        180,
+        365,
+        730
+      ],
+      "regla": "Del catálogo de intervalos ficticios (par días/km).",
+      "unidad": "días",
+      "nulable": false
+    },
+    {
+      "nombre": "intervalo_servicio_km",
+      "tipo": "entero",
+      "rol": "base",
+      "metodo_generacion": "muestreado_condicionado",
+      "depende_de": [
+        "combustible"
+      ],
+      "dominio": [
+        10000,
+        15000,
+        20000,
+        30000
+      ],
+      "regla": "Mismo par del catálogo que intervalo_servicio_dias.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "antiguedad_vehiculo_dias",
+      "tipo": "entero",
+      "rol": "derivada",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_corte",
+        "fecha_matriculacion"
+      ],
+      "dominio": ">= 0",
+      "regla": "(corte - matriculación) en días.",
+      "unidad": "días",
+      "nulable": false
+    },
+    {
+      "nombre": "dias_sin_visita",
+      "tipo": "entero",
+      "rol": "señal",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_corte",
+        "fecha_ultima_visita"
+      ],
+      "dominio": ">= 0",
+      "regla": "(corte - última visita) en días. SEÑAL d.",
+      "unidad": "días",
+      "nulable": false
+    },
+    {
+      "nombre": "dias_desde_mantenimiento",
+      "tipo": "entero",
+      "rol": "derivada",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_corte",
+        "fecha_ultimo_mantenimiento"
+      ],
+      "dominio": ">= 0",
+      "regla": "(corte - último mantenimiento) en días.",
+      "unidad": "días",
+      "nulable": false
+    },
+    {
+      "nombre": "km_desde_mantenimiento",
+      "tipo": "entero",
+      "rol": "derivada",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "km_actual",
+        "km_ultimo_mantenimiento"
+      ],
+      "dominio": ">= 0",
+      "regla": "km_actual - km_ultimo_mantenimiento.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "fecha_proximo_servicio",
+      "tipo": "fecha",
+      "rol": "derivada",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_ultimo_mantenimiento",
+        "intervalo_servicio_dias"
+      ],
+      "dominio": "puede ser > corte",
+      "regla": "último mantenimiento + intervalo (referencia calculada, no dato futuro observado).",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "km_proximo_servicio",
+      "tipo": "entero",
+      "rol": "derivada",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "km_ultimo_mantenimiento",
+        "intervalo_servicio_km"
+      ],
+      "dominio": ">= 0",
+      "regla": "km último mantenimiento + intervalo km.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "retraso_servicio_dias",
+      "tipo": "entero",
+      "rol": "señal",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "fecha_corte",
+        "fecha_proximo_servicio"
+      ],
+      "dominio": ">= 0",
+      "regla": "max(0, corte - fecha_proximo_servicio). SEÑAL r.",
+      "unidad": "días",
+      "nulable": false
+    },
+    {
+      "nombre": "exceso_km_servicio",
+      "tipo": "entero",
+      "rol": "señal",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "km_actual",
+        "km_proximo_servicio"
+      ],
+      "dominio": ">= 0",
+      "regla": "max(0, km_actual - km_proximo_servicio). SEÑAL m.",
+      "unidad": "km",
+      "nulable": false
+    },
+    {
+      "nombre": "nivel_prioridad",
+      "tipo": "entero",
+      "rol": "etiqueta",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "dias_sin_visita",
+        "retraso_servicio_dias",
+        "exceso_km_servicio",
+        "visitas_12m"
+      ],
+      "dominio": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "regla": "Primera fila aplicable de postventa_v1 (nivel menor primero). Solo usa las 4 señales.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "etiqueta_prioridad",
+      "tipo": "categoria",
+      "rol": "etiqueta",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "nivel_prioridad"
+      ],
+      "dominio": [
+        "preferente",
+        "alta",
+        "media",
+        "ordinaria",
+        "baja"
+      ],
+      "regla": "Mapa fijo: 1 preferente, 2 alta, 3 media, 4 ordinaria, 5 baja.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "motivo_prioridad",
+      "tipo": "categoria",
+      "rol": "etiqueta",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "dias_sin_visita",
+        "retraso_servicio_dias",
+        "exceso_km_servicio",
+        "visitas_12m"
+      ],
+      "dominio": "códigos n1_..n4_ o sin_condicion",
+      "regla": "Primer predicado verdadero dentro del nivel, en orden: inactividad, retraso, exceso_km, frecuencia.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "version_reglas",
+      "tipo": "cadena",
+      "rol": "trazabilidad",
+      "metodo_generacion": "constante",
+      "depende_de": [],
+      "dominio": [
+        "postventa_v1"
+      ],
+      "regla": "Debe coincidir con la política usada al recalcular.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "orden_entrada",
+      "tipo": "entero",
+      "rol": "cola",
+      "metodo_generacion": "calculado",
+      "depende_de": [
+        "id_caso"
+      ],
+      "dominio": "1..N, único",
+      "regla": "Contador asignado DESPUÉS de mezclar el lote aceptado.",
+      "unidad": null,
+      "nulable": false
+    },
+    {
+      "nombre": "estado_caso",
+      "tipo": "categoria",
+      "rol": "cola",
+      "metodo_generacion": "constante",
+      "depende_de": [],
+      "dominio": [
+        "pendiente",
+        "asignado"
+      ],
+      "regla": "'pendiente' en la fotografía inicial.",
+      "unidad": null,
+      "nulable": false
+    }
+  ],
+  "relaciones": [
+    "R01 matriculación <= primera visita; alta cliente <= primera visita",
+    "R02 primera visita <= último mantenimiento <= última visita <= corte",
+    "R03 km_ultimo_mantenimiento <= km_ultima_visita <= km_actual",
+    "R04 visitas_12m <= visitas_24m <= visitas_total",
+    "R05 última visita fuera de ventana => recuento de esa ventana = 0; dentro => > 0",
+    "R06 primera visita dentro de una ventana => todas las visitas están en ella",
+    "R07 visitas_total = 1 => primera = última = último mantenimiento, tipo = mantenimiento",
+    "R08 tipo_ultima_visita = mantenimiento => fecha y km coinciden con el último mantenimiento",
+    "R09 visitas_12m = 0 => intervenciones_12m = 0 y coste_12m_cent = 0",
+    "R10 visitas_12m > 0 => intervenciones_12m >= visitas_12m",
+    "R11 última visita en ventana anual => coste_12m_cent >= coste_ultima_visita_cent",
+    "R12 sin_contacto <=> fecha_ultimo_contacto ausente <=> contactos_12m = 0",
+    "R13 alta_cliente <= fecha_ultimo_contacto <= corte; contacto en [0,365) => contactos_12m >= 1, fuera => 0",
+    "R14 dias_sin_visita >= 365 <=> visitas_12m = 0 (convención de ventana [0,365))",
+    "R15 un solo evento de visita por día (decisión declarada)",
+    "R16 columnas derivadas coinciden exactamente con sus campos base",
+    "R17 única ausencia admisible: fecha_ultimo_contacto",
+    "R18 id_caso, id_vehiculo y orden_entrada únicos; categorías en catálogo; niveles en 1..5",
+    "R19 la prioridad recalculada por la referencia independiente coincide con nivel_prioridad (0 discrepancias)",
+    "R20 modelo/carroceria/combustible/transmision pertenecen a una combinación del catálogo; zona = zona del taller"
+  ]
+}
