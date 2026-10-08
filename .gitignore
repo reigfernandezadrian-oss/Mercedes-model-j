@@ -1,0 +1,19 @@
+# Entorno y Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Entornos virtuales
+venv/
+env/
+.env
+
+# Archivos masivos de datos (Requisito del proyecto)
+*.csv
+*.parquet
